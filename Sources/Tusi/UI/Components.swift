@@ -96,6 +96,11 @@ struct BarIconButton: View {
 /// Direction indicator. Before anything is typed there is no direction to show — the app
 /// hasn't detected a language yet — so it reads "自动", and only resolves to "中 → EN"
 /// (or the reverse) once there's input to judge.
+///
+/// Deliberately shapeless: no capsule fill, no border. Every actually-clickable thing in
+/// this bar (the tone selector, the icon buttons, the copy button) is drawn as a pill or a
+/// circle, so a pill here — despite never responding to a tap — would read as a control.
+/// Plain text + icon signals "this is a label" the same way it would in running prose.
 struct DirectionChip: View {
     let sourceLabel: String
     let target: TargetLanguage
@@ -119,16 +124,10 @@ struct DirectionChip: View {
             }
         }
         .font(.system(size: 11, weight: .semibold, design: .rounded))
-        .foregroundStyle(isActive ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(.tertiary))
-        .padding(.horizontal, 10)
-        .padding(.vertical, 4.5)
-        .background(Capsule().fill(Color.primary.opacity(0.055)))
-        .overlay(
-            Capsule().strokeBorder(
-                isActive ? AnyShapeStyle(Theme.accent.opacity(0.45)) : AnyShapeStyle(Color.clear),
-                lineWidth: 1
-            )
-        )
+        // .secondary, not .tertiary: "自动" and the tone selector's unselected labels are
+        // both "inactive, not currently the point" — they should sit at the same weight.
+        // The capsule background used to paper over the mismatch; plain text doesn't.
+        .foregroundStyle(isActive ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(.secondary))
         .animation(.snappy(duration: 0.2), value: isActive)
         .animation(.snappy(duration: 0.2), value: sourceLabel)
     }

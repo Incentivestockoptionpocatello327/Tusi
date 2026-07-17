@@ -55,8 +55,12 @@ struct TranslatorView: View {
                     .padding(.top, 12)
             }
 
+            // Horizontal padding matches inputArea/resultArea/SoftDivider above (16, not
+            // 12) so the copy button's right edge lines up with the clear button's and
+            // with the input/result text's own right margin — one consistent margin for
+            // the whole panel instead of the bottom row sitting 4pt closer to the edge.
             bottomBar
-                .padding(.horizontal, 12)
+                .padding(.horizontal, 16)
                 .padding(.top, engine.hasResultSection ? 12 : 10)
                 .padding(.bottom, 10)
         }
