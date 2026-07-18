@@ -110,21 +110,6 @@ struct TranslatorView: View {
                 .focused($inputFocused)
                 .frame(height: min(max(height, 24), maxInputHeight))
         }
-        .overlay(alignment: .topTrailing) {
-            if !engine.input.isEmpty {
-                Button {
-                    engine.clear()
-                    inputFocused = true
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 13))
-                        .foregroundStyle(.quaternary)
-                }
-                .buttonStyle(.plain)
-                .help("清空 (Esc 关闭面板)")
-                .transition(.opacity)
-            }
-        }
     }
 
     // MARK: - Result

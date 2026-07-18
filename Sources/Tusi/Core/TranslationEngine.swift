@@ -131,16 +131,6 @@ final class TranslationEngine: ObservableObject {
         state = output.isEmpty ? .idle : .done
     }
 
-    func clear() {
-        translationTask?.cancel()
-        translationTask = nil
-        input = ""
-        output = ""
-        copied = false
-        toast = nil
-        state = .idle
-    }
-
     /// Fills the panel with sample content for visual inspection (TUSI_PREVIEW).
     func debugPreview(input: String, output: String, toast: Toast? = nil) {
         self.input = input
