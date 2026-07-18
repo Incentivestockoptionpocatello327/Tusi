@@ -82,7 +82,7 @@ struct TranslatorView: View {
         }
         // Switching tone is a request to see the text in that tone, so re-run it —
         // but only when there's already a result the change would apply to.
-        .onChange(of: settings.tone) {
+        .onChange(of: settings.tone) { _ in
             guard engine.hasResultSection, !engine.input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
             engine.translate()
         }
@@ -142,7 +142,7 @@ struct TranslatorView: View {
                 .scrollIndicators(.never)
                 .frame(height: min(max(resultHeight, 20), maxResultHeight))
                 .onPreferenceChange(ResultHeightKey.self) { resultHeight = $0 }
-                .onChange(of: engine.output) {
+                .onChange(of: engine.output) { _ in
                     if engine.isTranslating {
                         proxy.scrollTo("end", anchor: .bottom)
                     }

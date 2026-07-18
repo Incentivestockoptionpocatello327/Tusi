@@ -95,8 +95,8 @@ struct SettingsView: View {
             .foregroundStyle(.quaternary)
         }
         .padding(18)
-        .onChange(of: settings.profiles) { testStates[editingIndex] = .idle }
-        .onChange(of: editingIndex) { showKey = false }
+        .onChange(of: settings.profiles) { _ in testStates[editingIndex] = .idle }
+        .onChange(of: editingIndex) { _ in showKey = false }
         // Leaving the page mid-recording would otherwise swallow the next keystroke
         // typed into the translator.
         .onDisappear { panelState.recordingShortcut = false }

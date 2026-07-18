@@ -16,7 +16,7 @@ A menubar translator for macOS. Type Chinese and get English; type anything else
 
 ## Requirements
 
-- macOS 14+
+- macOS 13+
 - An API key for any OpenAI-compatible service
 
 ## Install
