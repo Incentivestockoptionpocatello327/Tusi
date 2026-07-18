@@ -75,7 +75,9 @@ struct SettingsView: View {
                     .lineLimit(1...3)
             }
 
-            shortcutRow
+            SoftDivider()
+
+            shortcutsSection
 
             VStack(alignment: .leading, spacing: 10) {
                 Toggle("主用失败时自动切换到备用", isOn: $settings.fallbackEnabled)
@@ -90,7 +92,7 @@ struct SettingsView: View {
                 HStack(spacing: 5) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 9))
-                    Text("⌥Space 快捷键注册失败，可能被其他应用占用；仍可点菜单栏图标呼出")
+                    Text("全局呼出快捷键注册失败，可能被其他应用占用；换一个组合键，或点菜单栏图标呼出")
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .font(.system(size: 10.5))
@@ -103,14 +105,17 @@ struct SettingsView: View {
                 Text("API Key 仅保存在本机钥匙串，不会上传")
             }
             .font(.system(size: 10.5))
-            .foregroundStyle(.quaternary)
+            .foregroundStyle(.secondary)
         }
         .padding(18)
         .onChange(of: settings.profiles) { _ in testStates[editingIndex] = .idle }
         .onChange(of: editingIndex) { _ in showKey = false }
         // Leaving the page mid-recording would otherwise swallow the next keystroke
         // typed into the translator.
-        .onDisappear { panelState.recordingShortcut = false }
+        .onDisappear {
+            panelState.recordingShortcut = nil
+            panelState.shortcutError = nil
+        }
     }
 
     // MARK: - Header
@@ -215,60 +220,94 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Copy shortcut
+    // MARK: - Shortcuts
 
-    private var shortcutRow: some View {
-        HStack(spacing: 8) {
-            Text("复制快捷键")
+    private var shortcutsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("快捷键")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.secondary)
+
+            ForEach(ShortcutAction.allCases) { action in
+                shortcutRow(action)
+            }
+
+            if let error = panelState.shortcutError {
+                Text(error)
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(.orange)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.snappy(duration: 0.18), value: panelState.recordingShortcut)
+        .animation(.snappy(duration: 0.18), value: panelState.shortcutError)
+    }
+
+    private func shortcutRow(_ action: ShortcutAction) -> some View {
+        let recording = panelState.recordingShortcut == action
+        let combo = settings.shortcut(action)
+        let isDefault = KeyCombo.sameKey(combo, action.defaultCombo)
+
+        return HStack(spacing: 8) {
+            Text(action.label)
                 .font(.system(size: 12.5))
 
             Spacer()
 
-            if settings.copyShortcut != .defaultCopy, !panelState.recordingShortcut {
+            if !isDefault && !recording {
                 Button {
-                    settings.copyShortcut = .defaultCopy
+                    settings.setShortcut(action.defaultCombo, for: action)
                 } label: {
                     Image(systemName: "arrow.uturn.backward")
                         .font(.system(size: 10))
                         .foregroundStyle(.tertiary)
                 }
                 .buttonStyle(.plain)
-                .help("恢复默认 ⇧⌘C")
+                // Built explicitly rather than as an interpolated literal: matching the
+                // key SwiftUI would auto-generate for an interpolated LocalizedStringKey
+                // by hand (in Localizable.strings) is easy to get subtly wrong.
+                .help(String(format: L("恢复默认 %@"), action.defaultCombo.display))
             }
 
             Button {
-                panelState.recordingShortcut.toggle()
+                if recording {
+                    panelState.recordingShortcut = nil
+                } else {
+                    panelState.recordingShortcut = action
+                }
+                panelState.shortcutError = nil
             } label: {
-                Text(panelState.recordingShortcut ? "按下新快捷键…" : settings.copyShortcut.display)
-                    .font(.system(size: 11.5, weight: .medium, design: panelState.recordingShortcut ? .default : .rounded))
-                    .foregroundStyle(panelState.recordingShortcut ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(.secondary))
+                // combo.display (e.g. "⇧⌘C") is a String, so this ternary can't rely on
+                // Text's automatic LocalizedStringKey lookup — the other branch needs L().
+                Text(recording ? L("按下新快捷键…") : combo.display)
+                    .font(.system(size: 11.5, weight: .medium, design: recording ? .default : .rounded))
+                    .foregroundStyle(recording ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(.secondary))
                     .frame(minWidth: 62)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
                     .background(
-                        Capsule().fill(Color.primary.opacity(panelState.recordingShortcut ? 0.02 : 0.055))
+                        Capsule().fill(Color.primary.opacity(recording ? 0.02 : 0.055))
                     )
                     .overlay(
                         Capsule().strokeBorder(
-                            panelState.recordingShortcut
-                                ? AnyShapeStyle(Theme.accent.opacity(0.6))
-                                : AnyShapeStyle(Color.clear),
+                            recording ? AnyShapeStyle(Theme.accent.opacity(0.6)) : AnyShapeStyle(Color.clear),
                             lineWidth: 1
                         )
                     )
             }
             .buttonStyle(.plain)
-            .help(panelState.recordingShortcut ? "按 Esc 取消" : "点击后按下新的组合键")
+            .help(recording ? "按 Esc 取消" : "点击后按下新的组合键")
         }
-        .animation(.snappy(duration: 0.18), value: panelState.recordingShortcut)
-        .animation(.snappy(duration: 0.18), value: settings.copyShortcut)
     }
 
     // MARK: - Fields
 
+    // `label`/`hint` arrive as plain String params — literals live at each call site, one
+    // level removed from these Text()s — so LocalizedStringKey(...) does the lookup that
+    // Text(label) alone wouldn't.
     private func labeledField(_ label: String, hint: String? = nil, @ViewBuilder content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(label)
+            Text(LocalizedStringKey(label))
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.secondary)
             content()
@@ -283,9 +322,9 @@ struct SettingsView: View {
                         .strokeBorder(Color.primary.opacity(0.07), lineWidth: 1)
                 )
             if let hint {
-                Text(hint)
+                Text(LocalizedStringKey(hint))
                     .font(.system(size: 10))
-                    .foregroundStyle(.quaternary)
+                    .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -329,7 +368,7 @@ struct SettingsView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
-                    Text("连接正常 · \(ms) ms")
+                    Text(String(format: L("连接正常 · %d ms"), ms))
                 }
                 .font(.system(size: 11.5, weight: .medium))
                 .foregroundStyle(.secondary)

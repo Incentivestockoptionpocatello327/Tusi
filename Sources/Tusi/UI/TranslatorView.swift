@@ -166,7 +166,7 @@ struct TranslatorView: View {
             // Tone occupies the slot the model name used to: it's an action, the model
             // is static trivia that settings already shows. It stays in the tooltip.
             ToneSelector(tone: $settings.tone)
-                .help("翻译文风 · 当前模型：\(engine.activeModel)")
+                .help(String(format: L("翻译文风 · 当前模型：%@"), engine.activeModel))
 
             Spacer(minLength: 4)
 
@@ -198,7 +198,7 @@ struct TranslatorView: View {
             }
 
             if !engine.output.isEmpty {
-                CopyButton(copied: engine.copied, shortcutHint: settings.copyShortcut.display) {
+                CopyButton(copied: engine.copied, shortcutHint: settings.shortcut(.copy).display) {
                     engine.copyOutput()
                 }
                 .transition(.scale(scale: 0.9).combined(with: .opacity))

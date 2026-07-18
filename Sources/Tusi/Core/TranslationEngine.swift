@@ -45,7 +45,7 @@ final class TranslationEngine: ObservableObject {
     /// The bar never reveals which slot actually served — that stays behind the scenes.
     var activeModel: String {
         let model = settings.profiles[settings.primaryIndex].model.trimmingCharacters(in: .whitespaces)
-        return model.isEmpty ? "未配置模型" : model
+        return model.isEmpty ? L("未配置模型") : model
     }
 
     var hasResultSection: Bool {
@@ -95,7 +95,7 @@ final class TranslationEngine: ObservableObject {
                     // Normalize punctuation once the full text is in — the conversion
                     // needs to see the character after a quote to place it.
                     self.output = SmartQuotes.apply(to: self.output)
-                    self.state = self.output.isEmpty ? .failed("模型没有返回内容") : .done
+                    self.state = self.output.isEmpty ? .failed(L("模型没有返回内容")) : .done
                     if self.settings.autoCopy, !self.output.isEmpty {
                         self.copyToPasteboard()
                         self.flashCopied(auto: true)
@@ -120,8 +120,8 @@ final class TranslationEngine: ObservableObject {
             }
 
             guard !Task.isCancelled else { return }
-            let message = lastError?.localizedDescription ?? "翻译失败"
-            self.state = .failed(chain.count > 1 ? "主用和备用都失败了 · \(message)" : message)
+            let message = lastError?.localizedDescription ?? L("翻译失败")
+            self.state = .failed(chain.count > 1 ? String(format: L("主用和备用都失败了 · %@"), message) : message)
         }
     }
 

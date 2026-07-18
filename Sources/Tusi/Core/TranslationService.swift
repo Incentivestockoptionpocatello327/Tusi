@@ -8,15 +8,18 @@ enum TranslationError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .emptyKey:
-            return "还没有配置 API Key，请先在设置中填写"
+            return L("还没有配置 API Key，请先在设置中填写")
         case .invalidURL:
-            return "接口地址无效，请检查设置"
+            return L("接口地址无效，请检查设置")
         case .http(let code, let message):
             switch code {
-            case 401: return "API Key 无效或已过期 (401)"
-            case 402: return "账户余额不足 (402)"
-            case 429: return "请求过于频繁，稍后再试 (429)"
-            default: return message.isEmpty ? "请求失败 (HTTP \(code))" : "\(message) (HTTP \(code))"
+            case 401: return L("API Key 无效或已过期 (401)")
+            case 402: return L("账户余额不足 (402)")
+            case 429: return L("请求过于频繁，稍后再试 (429)")
+            default:
+                return message.isEmpty
+                    ? String(format: L("请求失败 (HTTP %d)"), code)
+                    : "\(message) (HTTP \(code))"
             }
         }
     }
@@ -100,7 +103,7 @@ enum TranslationService {
                     let (bytes, response) = try await session.bytes(for: request)
 
                     guard let http = response as? HTTPURLResponse else {
-                        throw TranslationError.http(0, "无效响应")
+                        throw TranslationError.http(0, L("无效响应"))
                     }
                     guard http.statusCode == 200 else {
                         var errorBody = ""
@@ -145,7 +148,7 @@ enum TranslationService {
         let start = Date()
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else {
-            throw TranslationError.http(0, "无效响应")
+            throw TranslationError.http(0, L("无效响应"))
         }
         guard http.statusCode == 200 else {
             throw TranslationError.http(http.statusCode, parseErrorMessage(String(data: data, encoding: .utf8) ?? ""))
@@ -162,7 +165,7 @@ enum TranslationService {
             // points at a website, not the API endpoint — surface that instead of
             // the raw markup.
             if trimmed.hasPrefix("<!DOCTYPE") || trimmed.hasPrefix("<html") {
-                return "接口地址返回的是网页而不是 API 数据，请检查接口地址是否正确"
+                return L("接口地址返回的是网页而不是 API 数据，请检查接口地址是否正确")
             }
             return trimmed.prefix(200).trimmingCharacters(in: .whitespacesAndNewlines)
         }

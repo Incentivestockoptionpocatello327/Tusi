@@ -72,12 +72,17 @@ final class SettingsStore: ObservableObject {
     @Published var tone: Tone {
         didSet { defaults.set(tone.rawValue, forKey: "tone") }
     }
-    @Published var copyShortcut: KeyCombo {
-        didSet {
-            defaults.set(Int(copyShortcut.keyCode), forKey: "copyShortcut.keyCode")
-            defaults.set(Int(copyShortcut.modifiers), forKey: "copyShortcut.modifiers")
-            defaults.set(copyShortcut.display, forKey: "copyShortcut.display")
-        }
+    /// All five rebindable shortcuts. Missing entries fall back to the action's default.
+    @Published var shortcuts: [ShortcutAction: KeyCombo] {
+        didSet { persistShortcuts() }
+    }
+
+    func shortcut(_ action: ShortcutAction) -> KeyCombo {
+        shortcuts[action] ?? action.defaultCombo
+    }
+
+    func setShortcut(_ combo: KeyCombo, for action: ShortcutAction) {
+        shortcuts[action] = combo
     }
     /// Optional freeform instruction appended to the system prompt — glossary entries,
     /// formatting rules, house style. Additive on purpose: it can't replace the
@@ -116,18 +121,52 @@ final class SettingsStore: ObservableObject {
         autoCopy = defaults.object(forKey: "autoCopy") as? Bool ?? true
         tone = Tone(rawValue: defaults.string(forKey: "tone") ?? "") ?? .standard
         extraInstruction = defaults.string(forKey: "extraInstruction") ?? ""
-        if let display = defaults.string(forKey: "copyShortcut.display"),
-           defaults.object(forKey: "copyShortcut.keyCode") != nil {
-            copyShortcut = KeyCombo(
-                keyCode: UInt16(defaults.integer(forKey: "copyShortcut.keyCode")),
-                modifiers: UInt(defaults.integer(forKey: "copyShortcut.modifiers")),
-                display: display
-            )
-        } else {
-            copyShortcut = .defaultCopy
-        }
+        shortcuts = Self.loadShortcuts(defaults: defaults)
         launchAtLogin = SMAppService.mainApp.status == .enabled
         profiles = isPreview ? [APIProfile(), APIProfile()] : Self.loadProfiles(defaults: defaults)
+    }
+
+    // MARK: - Shortcut persistence
+
+    private static func loadShortcuts(defaults: UserDefaults) -> [ShortcutAction: KeyCombo] {
+        // The old single-shortcut layout stored copy under "copyShortcut.*"; fold it into
+        // the new per-action layout so existing users keep their custom copy key.
+        if !defaults.bool(forKey: "didMigrateShortcuts") {
+            defaults.set(true, forKey: "didMigrateShortcuts")
+            if defaults.object(forKey: "copyShortcut.keyCode") != nil,
+               let display = defaults.string(forKey: "copyShortcut.display") {
+                let base = "shortcut.\(ShortcutAction.copy.rawValue)"
+                defaults.set(defaults.integer(forKey: "copyShortcut.keyCode"), forKey: "\(base).keyCode")
+                defaults.set(defaults.integer(forKey: "copyShortcut.modifiers"), forKey: "\(base).modifiers")
+                defaults.set(display, forKey: "\(base).display")
+            }
+        }
+
+        var result: [ShortcutAction: KeyCombo] = [:]
+        for action in ShortcutAction.allCases {
+            let base = "shortcut.\(action.rawValue)"
+            if let display = defaults.string(forKey: "\(base).display"),
+               defaults.object(forKey: "\(base).keyCode") != nil {
+                result[action] = KeyCombo(
+                    keyCode: UInt16(defaults.integer(forKey: "\(base).keyCode")),
+                    modifiers: UInt(defaults.integer(forKey: "\(base).modifiers")),
+                    display: display
+                )
+            } else {
+                result[action] = action.defaultCombo
+            }
+        }
+        return result
+    }
+
+    private func persistShortcuts() {
+        guard !isPreview else { return }
+        for (action, combo) in shortcuts {
+            let base = "shortcut.\(action.rawValue)"
+            defaults.set(Int(combo.keyCode), forKey: "\(base).keyCode")
+            defaults.set(Int(combo.modifiers), forKey: "\(base).modifiers")
+            defaults.set(combo.display, forKey: "\(base).display")
+        }
     }
 
     // MARK: - Persistence
@@ -197,7 +236,7 @@ final class SettingsStore: ObservableObject {
     /// frame so the tab capsule hugs its text instead of reserving dead space.
     func label(for index: Int) -> String {
         let host = profiles[index].config.displayHost
-        guard !host.isEmpty else { return "未配置" }
+        guard !host.isEmpty else { return L("未配置") }
         guard host.count > 22 else { return host }
         return host.prefix(11) + "…" + host.suffix(8)
     }

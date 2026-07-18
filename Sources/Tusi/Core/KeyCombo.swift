@@ -1,5 +1,45 @@
 import AppKit
 
+/// The five shortcuts the user can rebind. Each knows its own default and its rules —
+/// the global summon must carry a ⌘/⌃/⌥ modifier (a bare global key would fire on every
+/// press system-wide), while panel-local shortcuts may be bare (translate is a plain ⏎).
+enum ShortcutAction: String, CaseIterable, Identifiable {
+    case summon, translate, newline, close, copy
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .summon: return L("全局呼出")
+        case .translate: return L("翻译")
+        case .newline: return L("换行")
+        case .close: return L("关闭 / 返回")
+        case .copy: return L("复制")
+        }
+    }
+
+    /// True only for the global hotkey, which is registered system-wide via Carbon.
+    var isGlobal: Bool { self == .summon }
+
+    /// The global hotkey needs a real modifier; local ones don't.
+    var requiresModifier: Bool { isGlobal }
+
+    var defaultCombo: KeyCombo {
+        switch self {
+        case .summon:
+            return KeyCombo(keyCode: 49, modifiers: NSEvent.ModifierFlags([.command, .shift]).rawValue, display: "⇧⌘Space")
+        case .translate:
+            return KeyCombo(keyCode: 36, modifiers: 0, display: "⏎")
+        case .newline:
+            return KeyCombo(keyCode: 36, modifiers: NSEvent.ModifierFlags([.command]).rawValue, display: "⌘⏎")
+        case .close:
+            return KeyCombo(keyCode: 53, modifiers: 0, display: "Esc")
+        case .copy:
+            return .defaultCopy
+        }
+    }
+}
+
 /// A user-recordable keyboard shortcut.
 ///
 /// The display string is captured at record time rather than derived on the fly:
@@ -17,8 +57,18 @@ struct KeyCombo: Equatable {
     )
 
     func matches(_ event: NSEvent) -> Bool {
-        event.keyCode == keyCode && Self.normalized(event.modifierFlags).rawValue == modifiers
+        Self.canonicalKeyCode(event.keyCode) == Self.canonicalKeyCode(keyCode)
+            && Self.normalized(event.modifierFlags).rawValue == modifiers
     }
+
+    /// Same key + same modifiers, ignoring the (derived) display string. Used for
+    /// conflict detection and "is this still the default?" checks.
+    static func sameKey(_ a: KeyCombo, _ b: KeyCombo) -> Bool {
+        canonicalKeyCode(a.keyCode) == canonicalKeyCode(b.keyCode) && a.modifiers == b.modifiers
+    }
+
+    /// Return and the numeric-keypad Enter are the same key as far as shortcuts care.
+    static func canonicalKeyCode(_ code: UInt16) -> UInt16 { code == 76 ? 36 : code }
 
     /// Caps lock is a state, not an intent — a shortcut shouldn't stop working because
     /// it happens to be on.

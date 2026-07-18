@@ -9,7 +9,11 @@ final class FloatingPanel: NSPanel {
 
 @MainActor
 final class PanelController {
-    static let panelWidth: CGFloat = 424
+    // 424 was sized for the Chinese bottom bar; English tone labels (Casual/Standard/
+    // Formal vs 口语/标准/正式) measured 428.5pt of *content* alone in that row, which
+    // overflows 424 once its 16pt side margins are added. 470 clears that with room
+    // to spare in both languages.
+    static let panelWidth: CGFloat = 470
 
     private let panel: FloatingPanel
     private let engine: TranslationEngine
@@ -164,32 +168,18 @@ final class PanelController {
             let flags = KeyCombo.normalized(event.modifierFlags)
 
             // Recording a new shortcut swallows everything until it gets a valid combo.
-            if self.panelState.recordingShortcut {
-                if event.keyCode == 53 {
-                    self.panelState.recordingShortcut = false
+            if let action = self.panelState.recordingShortcut {
+                if event.keyCode == 53 {  // Esc always cancels recording.
+                    self.panelState.recordingShortcut = nil
+                    self.panelState.shortcutError = nil
                     return nil
                 }
-                // Shift alone just types a capital letter — insist on a real modifier
-                // so the recorded shortcut can't shadow ordinary typing.
-                let hasRealModifier = flags.contains(.command)
-                    || flags.contains(.control)
-                    || flags.contains(.option)
-                guard hasRealModifier else { return nil }
-                self.settings.copyShortcut = KeyCombo(
-                    keyCode: event.keyCode,
-                    modifiers: flags.rawValue,
-                    display: KeyCombo.describe(
-                        keyCode: event.keyCode,
-                        characters: event.charactersIgnoringModifiers,
-                        flags: flags
-                    )
-                )
-                self.panelState.recordingShortcut = false
+                self.captureShortcut(for: action, event: event, flags: flags)
                 return nil
             }
 
-            // Esc: back out of settings first, then close the panel.
-            if event.keyCode == 53 {
+            // Close / back — configurable (default Esc). Backs out of settings first.
+            if self.settings.shortcut(.close).matches(event) {
                 if self.panelState.showSettings {
                     withAnimation(.snappy(duration: 0.25)) { self.panelState.showSettings = false }
                 } else {
@@ -198,7 +188,7 @@ final class PanelController {
                 return nil
             }
 
-            // ⌘, opens settings.
+            // ⌘, opens settings (not user-configurable — a macOS convention).
             if flags == .command, event.charactersIgnoringModifiers == "," {
                 withAnimation(.snappy(duration: 0.25)) { self.panelState.showSettings = true }
                 return nil
@@ -207,27 +197,60 @@ final class PanelController {
             // Let text fields in settings behave normally.
             guard !self.panelState.showSettings else { return event }
 
-            // The user-configurable copy shortcut.
-            if self.settings.copyShortcut.matches(event) {
+            if self.settings.shortcut(.copy).matches(event) {
                 self.engine.copyOutput()
                 return nil
             }
-
-            // Return (36) or numeric-keypad Enter (76): translate.
-            // ⇧Return and ⌘Return both insert a newline.
-            if event.keyCode == 36 || event.keyCode == 76 {
-                if flags.contains(.shift) { return event }
-                if flags.contains(.command) {
-                    // AppKit won't treat ⌘Return as a newline on its own; ask the focused
-                    // text view directly so the cursor and undo stack stay intact.
-                    (self.panel.firstResponder as? NSTextView)?.insertNewline(nil)
-                    return nil
-                }
+            if self.settings.shortcut(.newline).matches(event) {
+                // AppKit won't treat a modified Return as a newline on its own; ask the
+                // focused text view directly so the cursor and undo stack stay intact.
+                (self.panel.firstResponder as? NSTextView)?.insertNewline(nil)
+                return nil
+            }
+            if self.settings.shortcut(.translate).matches(event) {
                 self.engine.translate()
                 return nil
             }
+            // Anything else (e.g. ⇧Return) falls through to the text view, which inserts
+            // a newline by default — so ⇧Return keeps working without special-casing.
             return event
         }
+    }
+
+    /// Validates a recorded keystroke and, if it passes, binds it to the action. Rejections
+    /// (missing modifier for the global key, or a clash with another shortcut) leave
+    /// recording active and post a message for Settings to show.
+    private func captureShortcut(for action: ShortcutAction, event: NSEvent, flags: NSEvent.ModifierFlags) {
+        if action.requiresModifier {
+            let hasRealModifier = flags.contains(.command)
+                || flags.contains(.control)
+                || flags.contains(.option)
+            guard hasRealModifier else {
+                panelState.shortcutError = L("全局呼出必须包含 ⌘ / ⌃ / ⌥ 修饰键")
+                return
+            }
+        }
+
+        let combo = KeyCombo(
+            keyCode: event.keyCode,
+            modifiers: flags.rawValue,
+            display: KeyCombo.describe(
+                keyCode: event.keyCode,
+                characters: event.charactersIgnoringModifiers,
+                flags: flags
+            )
+        )
+
+        if let clash = ShortcutAction.allCases.first(where: {
+            $0 != action && KeyCombo.sameKey(settings.shortcut($0), combo)
+        }) {
+            panelState.shortcutError = String(format: L("与「%@」重复了"), clash.label)
+            return
+        }
+
+        settings.setShortcut(combo, for: action)
+        panelState.recordingShortcut = nil
+        panelState.shortcutError = nil
     }
 
     private func installResignObserver() {

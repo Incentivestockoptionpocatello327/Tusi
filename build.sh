@@ -43,6 +43,13 @@ esac
 
 cp Resources/Tusi.icns "$APP/Contents/Resources/Tusi.icns"
 
+# Copy .lproj folders straight into the app's own Resources — not SwiftPM's nested
+# resource bundle — so Bundle.main (what SwiftUI's Text/.help and NSLocalizedString both
+# read by default) finds them without any explicit `bundle:` argument anywhere in the code.
+for lproj in Sources/Tusi/Resources/*.lproj; do
+    [ -d "$lproj" ] && cp -R "$lproj" "$APP/Contents/Resources/"
+done
+
 cat > "$APP/Contents/Info.plist" <<'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -60,10 +67,17 @@ cat > "$APP/Contents/Info.plist" <<'EOF'
     <string>Tusi</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>zh-Hans</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>zh-Hans</string>
+        <string>en</string>
+    </array>
     <key>CFBundleShortVersionString</key>
-    <string>1.1.2</string>
+    <string>1.2.0</string>
     <key>CFBundleVersion</key>
-    <string>6</string>
+    <string>7</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>LSUIElement</key>

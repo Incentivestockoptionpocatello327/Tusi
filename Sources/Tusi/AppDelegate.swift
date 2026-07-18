@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 @MainActor
@@ -6,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var panelController: PanelController!
     private var hotkey: HotkeyManager?
+    private var cancellables = Set<AnyCancellable>()
 
     let settings = SettingsStore()
     let panelState = PanelState()
@@ -23,9 +25,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         hotkey = HotkeyManager { [weak self] in
             self?.togglePanel()
         }
-        // A nil manager means ⌥Space registration failed (another app owns it). The
-        // menu-bar icon still opens the panel, so this is a note, not a fatal error.
-        panelState.globalHotkeyFailed = (hotkey == nil)
+        registerSummonHotkey(settings.shortcut(.summon))
+
+        // Re-register whenever the user rebinds the summon shortcut. Other shortcut
+        // changes flow through here too but are no-ops (same summon combo → deduped).
+        settings.$shortcuts
+            .map { $0[.summon] ?? ShortcutAction.summon.defaultCombo }
+            .removeDuplicates()
+            .dropFirst()
+            .sink { [weak self] combo in self?.registerSummonHotkey(combo) }
+            .store(in: &cancellables)
 
         // First run without a usable profile: open the panel so setup is obvious.
         if !settings.isConfigured {
@@ -128,17 +137,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showStatusMenu() {
         let menu = NSMenu()
-        let openItem = NSMenuItem(title: "打开翻译面板", action: #selector(openPanel), keyEquivalent: " ")
-        openItem.keyEquivalentModifierMask = [.option]
+        // No keyEquivalent hint here — the summon shortcut is user-configurable, and a
+        // fixed ⌥Space label would just be wrong. Settings shows the real binding.
+        let openItem = NSMenuItem(title: L("打开翻译面板"), action: #selector(openPanel), keyEquivalent: "")
         openItem.target = self
         menu.addItem(openItem)
 
-        let settingsItem = NSMenuItem(title: "设置…", action: #selector(openSettings), keyEquivalent: ",")
+        let settingsItem = NSMenuItem(title: L("设置…"), action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
         menu.addItem(settingsItem)
 
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "退出 Tusi", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: L("退出 Tusi"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
 
         statusItem.menu = menu
         statusItem.button?.performClick(nil)
@@ -158,6 +168,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panelController.toggle()
     }
 
+    /// Registers (or re-registers) the global summon hotkey and surfaces failure. A nil
+    /// manager or a rejected combo means the menu-bar icon is the only way in — a note,
+    /// not a fatal error.
+    private func registerSummonHotkey(_ combo: KeyCombo) {
+        let ok = hotkey?.update(combo: combo) ?? false
+        panelState.globalHotkeyFailed = !ok
+    }
+
     // MARK: - Main menu (needed so ⌘C/⌘V/⌘Z work in a menu-bar-only app)
 
     private func setupMainMenu() {
@@ -165,20 +183,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let appMenuItem = NSMenuItem()
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: "退出 Tusi", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appMenu.addItem(withTitle: L("退出 Tusi"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appMenuItem.submenu = appMenu
         mainMenu.addItem(appMenuItem)
 
         let editMenuItem = NSMenuItem()
-        let editMenu = NSMenu(title: "编辑")
-        editMenu.addItem(withTitle: "撤销", action: Selector(("undo:")), keyEquivalent: "z")
-        let redo = NSMenuItem(title: "重做", action: Selector(("redo:")), keyEquivalent: "Z")
+        let editMenu = NSMenu(title: L("编辑"))
+        editMenu.addItem(withTitle: L("撤销"), action: Selector(("undo:")), keyEquivalent: "z")
+        let redo = NSMenuItem(title: L("重做"), action: Selector(("redo:")), keyEquivalent: "Z")
         editMenu.addItem(redo)
         editMenu.addItem(.separator())
-        editMenu.addItem(withTitle: "剪切", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
-        editMenu.addItem(withTitle: "拷贝", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        editMenu.addItem(withTitle: "粘贴", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
-        editMenu.addItem(withTitle: "全选", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        editMenu.addItem(withTitle: L("剪切"), action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: L("拷贝"), action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: L("粘贴"), action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(withTitle: L("全选"), action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         editMenuItem.submenu = editMenu
         mainMenu.addItem(editMenuItem)
 

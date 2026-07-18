@@ -89,7 +89,10 @@ struct BarIconButton: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
-        .help(help)
+        // `help` arrives as a plain, untranslated String from every call site — wrapping
+        // it in LocalizedStringKey here (once) sends it through the same table lookup a
+        // literal `.help("...")` would get, without repeating that at each call site.
+        .help(LocalizedStringKey(help))
     }
 }
 
@@ -155,6 +158,11 @@ struct ToneSelector: View {
                     Text(option.label)
                         .font(.system(size: 10.5, weight: selected ? .semibold : .medium))
                         .foregroundStyle(selected ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+                        // Without this, these labels could get silently truncated (seen
+                        // with the longer English tone names) instead of reporting their
+                        // real width — .fixedSize() forces Text to always claim what it
+                        // actually needs.
+                        .fixedSize()
                         .padding(.horizontal, 9)
                         .padding(.vertical, 3.5)
                         .background {
@@ -271,7 +279,7 @@ struct Toast: View {
     var tint: AnyShapeStyle
 
     static func fellBack() -> Toast {
-        Toast(icon: "arrow.triangle.branch", text: "主用连接失败，已用备用翻译", tint: AnyShapeStyle(Color.orange))
+        Toast(icon: "arrow.triangle.branch", text: L("主用连接失败，已用备用翻译"), tint: AnyShapeStyle(Color.orange))
     }
 
     var body: some View {

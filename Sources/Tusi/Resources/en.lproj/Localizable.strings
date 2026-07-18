@@ -1,0 +1,94 @@
+/* MARK: - AppDelegate: status-item menu & standard Edit menu */
+"打开翻译面板" = "Open Translation Panel";
+"设置…" = "Settings…";
+"退出 Tusi" = "Quit Tusi";
+"编辑" = "Edit";
+"撤销" = "Undo";
+"重做" = "Redo";
+"剪切" = "Cut";
+"拷贝" = "Copy";
+"粘贴" = "Paste";
+"全选" = "Select All";
+
+/* MARK: - PanelController: shortcut recording errors */
+"全局呼出必须包含 ⌘ / ⌃ / ⌥ 修饰键" = "The global shortcut must include ⌘ / ⌃ / ⌥";
+"与「%@」重复了" = "Conflicts with “%@”";
+
+/* MARK: - TranslatorView */
+"输入中文或任意语言，⏎ 翻译" = "Type Chinese or any language, ⏎ to translate";
+"翻译文风 · 当前模型：%@" = "Tone · Model: %@";
+"停止" = "Stop";
+"⏎ 翻译" = "⏎ Translate";
+"取消固定" = "Unpin";
+"固定面板（点击外部不关闭）" = "Pin panel (stays open when you click outside)";
+"设置 (⌘,)" = "Settings (⌘,)";
+
+/* MARK: - SettingsView */
+"设置" = "Settings";
+"接口地址" = "Base URL";
+"模型" = "Model";
+"供应商路由（可选）" = "Provider routing (optional)";
+"仅 OpenRouter 等支持 provider 参数的网关生效，如 novita，多个用逗号分隔" = "Only takes effect on gateways that support the provider parameter (e.g. OpenRouter), like novita. Separate multiple with commas.";
+"隐藏" = "Hide";
+"显示" = "Show";
+"附加要求（可选）" = "Additional instructions (optional)";
+"对所有翻译生效，例如统一术语、保留格式" = "Applies to every translation — e.g. consistent terminology, preserved formatting";
+"例：commit 统一译作「提交」" = "e.g. always translate “commit” as “提交”";
+"主用失败时自动切换到备用" = "Switch to backup automatically if primary fails";
+"翻译完成后自动复制" = "Copy automatically when translation finishes";
+"登录时启动" = "Launch at login";
+"全局呼出快捷键注册失败，可能被其他应用占用；换一个组合键，或点菜单栏图标呼出" = "The global summon shortcut couldn't be registered — another app may already be using it. Try a different combination, or use the menu-bar icon instead.";
+"API Key 仅保存在本机钥匙串，不会上传" = "The API key is stored only in this Mac's Keychain, never uploaded";
+"返回 (Esc)" = "Back (Esc)";
+"当前为主用，优先使用这套" = "This is the primary — tried first";
+"设为主用" = "Make primary";
+"· 现在是主用失败后的备用" = "· Used as backup if the primary fails";
+"· 备用已关闭，这套不会被使用" = "· Backup is off — this profile won't be used";
+"主用" = "Primary";
+"备用" = "Backup";
+"快捷键" = "Shortcuts";
+"恢复默认 %@" = "Restore default %@";
+"按下新快捷键…" = "Press a new shortcut…";
+"按 Esc 取消" = "Press Esc to cancel";
+"点击后按下新的组合键" = "Click, then press a new combination";
+"测试连接" = "Test Connection";
+"连接中…" = "Connecting…";
+"连接正常 · %d ms" = "Connected · %d ms";
+"未配置" = "Not set";
+
+/* MARK: - TranslationEngine */
+"未配置模型" = "No model set";
+"模型没有返回内容" = "The model returned no content";
+"翻译失败" = "Translation failed";
+"主用和备用都失败了 · %@" = "Both primary and backup failed · %@";
+
+/* MARK: - Components (direction chip, copy button, fallback toast, error box) */
+"自动" = "Auto";
+"已复制" = "Copied";
+"复制" = "Copy";
+"主用连接失败，已用备用翻译" = "Primary connection failed — used backup instead";
+"重试" = "Retry";
+
+/* MARK: - ShortcutAction labels */
+"全局呼出" = "Summon";
+"翻译" = "Translate";
+"换行" = "Newline";
+"关闭 / 返回" = "Close / Back";
+
+/* MARK: - Tone labels & descriptions */
+"标准" = "Standard";
+"正式" = "Formal";
+"口语" = "Casual";
+"忠实自然，适合大多数场合" = "Faithful and natural — fits most situations";
+"书面、专业，适合邮件、文档" = "Written and professional — fits email and documents";
+"轻松口语，适合聊天、社交" = "Relaxed and conversational — fits chat and social posts";
+
+/* MARK: - TranslationService errors */
+"还没有配置 API Key，请先在设置中填写" = "No API key set yet — add one in Settings";
+"接口地址无效，请检查设置" = "Invalid base URL — check Settings";
+"API Key 无效或已过期 (401)" = "Invalid or expired API key (401)";
+"账户余额不足 (402)" = "Insufficient account balance (402)";
+"请求过于频繁，稍后再试 (429)" = "Too many requests — try again later (429)";
+"请求失败 (HTTP %d)" = "Request failed (HTTP %d)";
+"无效响应" = "Invalid response";
+"接口地址返回的是网页而不是 API 数据，请检查接口地址是否正确" = "The base URL returned a web page instead of API data — check that it's correct";

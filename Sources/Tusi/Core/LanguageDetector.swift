@@ -26,17 +26,17 @@ enum Tone: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .standard: return "标准"
-        case .formal: return "正式"
-        case .casual: return "口语"
+        case .standard: return L("标准")
+        case .formal: return L("正式")
+        case .casual: return L("口语")
         }
     }
 
     var help: String {
         switch self {
-        case .standard: return "忠实自然，适合大多数场合"
-        case .formal: return "书面、专业，适合邮件、文档"
-        case .casual: return "轻松口语，适合聊天、社交"
+        case .standard: return L("忠实自然，适合大多数场合")
+        case .formal: return L("书面、专业，适合邮件、文档")
+        case .casual: return L("轻松口语，适合聊天、社交")
         }
     }
 
