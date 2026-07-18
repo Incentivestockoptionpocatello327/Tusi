@@ -86,6 +86,17 @@ struct SettingsView: View {
             .controlSize(.mini)
             .font(.system(size: 12.5))
 
+            if panelState.globalHotkeyFailed {
+                HStack(spacing: 5) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 9))
+                    Text("⌥Space 快捷键注册失败，可能被其他应用占用；仍可点菜单栏图标呼出")
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .font(.system(size: 10.5))
+                .foregroundStyle(.orange)
+            }
+
             HStack(spacing: 5) {
                 Image(systemName: "lock.fill")
                     .font(.system(size: 9))
@@ -125,10 +136,15 @@ struct SettingsView: View {
 
             Spacer()
 
-            Text("Tusi v1.0")
+            Text("Tusi v\(appVersion)")
                 .font(.system(size: 10.5))
                 .foregroundStyle(.quaternary)
         }
+    }
+
+    /// Read from the bundle so it can never drift from the shipped version.
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
     }
 
     // MARK: - Slot tabs

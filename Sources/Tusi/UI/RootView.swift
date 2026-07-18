@@ -1,7 +1,9 @@
 import SwiftUI
 
 private struct PanelHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
+    // `let`, not `var`: the protocol only needs a getter, and a mutable static is a
+    // data-race error under the Swift 6 language mode.
+    static let defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = max(value, nextValue())
     }

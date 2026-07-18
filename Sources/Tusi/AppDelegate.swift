@@ -23,6 +23,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         hotkey = HotkeyManager { [weak self] in
             self?.togglePanel()
         }
+        // A nil manager means ⌥Space registration failed (another app owns it). The
+        // menu-bar icon still opens the panel, so this is a note, not a fatal error.
+        panelState.globalHotkeyFailed = (hotkey == nil)
 
         // First run without a usable profile: open the panel so setup is obvious.
         if !settings.isConfigured {

@@ -88,7 +88,9 @@ enum TranslationService {
                     let body: [String: Any] = [
                         "model": config.model,
                         "stream": true,
-                        "temperature": 1.0,
+                        // Low temperature: translation wants faithful, repeatable output,
+                        // not creative variation. 1.0 made the same input drift between runs.
+                        "temperature": 0.3,
                         "messages": [
                             ["role": "system", "content": systemPrompt(for: target, tone: tone, extra: extra)],
                             ["role": "user", "content": text],
@@ -109,13 +111,14 @@ enum TranslationService {
                         throw TranslationError.http(http.statusCode, Self.parseErrorMessage(errorBody))
                     }
 
+                    let decoder = JSONDecoder()
                     for try await line in bytes.lines {
                         try Task.checkCancellation()
                         guard line.hasPrefix("data:") else { continue }
                         let payload = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
                         if payload == "[DONE]" { break }
                         guard let data = payload.data(using: .utf8),
-                              let chunk = try? JSONDecoder().decode(StreamChunk.self, from: data),
+                              let chunk = try? decoder.decode(StreamChunk.self, from: data),
                               let piece = chunk.choices.first?.delta.content,
                               !piece.isEmpty
                         else { continue }
